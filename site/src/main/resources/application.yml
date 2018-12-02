@@ -57,8 +57,8 @@ wechat:
   appSecretConfigList:
     -
       appType: 1  # 公众号
-      appId: wx65b6b370eb08f5fa
-      appSecret: 0d7139ff0e7a7b762bec805fb2d4c13a
+      appId: wxa871247c24a24f28
+      appSecret: d42b0a70a34769cc6eb95db94739a9c0
     -
       appType: 2  # 小程序
       appId: wx95ec521df9ec5a9e
