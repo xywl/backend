@@ -726,12 +726,13 @@ public class DispatchInfoServiceImpl extends BaseCRUDService<DispatchInfoDO, Dis
         try {
             ShipStaffDO shipOwner = shipStaffDAO.getShipOwnerByShipId(ship.getId());
             if (shipOwner == null) {
-                LOG.warn("no ship owner found, shipNo:{}", ship.getShipNo());
+                LOG.warn("no ship owner found, shipNo:{}, shipId:{}", ship.getShipNo(), ship.getId());
+                return null;
             }
             // 根据船舶去寻找关联用户 根据船关联的手机号去用户表中的手机号进而获取到用户
             UserProfileDO userProfileDO = userProfileDAO.getByMobile(shipOwner.getMobile());
             if (userProfileDO == null) {
-                LOG.warn("no user found by mobile:{}", ship.getMobile());
+                LOG.warn("no user found by mobile:{}", shipOwner.getMobile());
                 return null;
             }
 
@@ -776,6 +777,16 @@ public class DispatchInfoServiceImpl extends BaseCRUDService<DispatchInfoDO, Dis
                 return null;
             }
 
+            //
+            if (customerTaskFlow == null) {
+                JsonRet<CustomerTaskFlow> customerTaskFlowRet = customerTaskFlowService.getById(dispatchFlagInfo.getCustomerTaskFlowId());
+                customerTaskFlow = customerTaskFlowRet.getData();
+            }
+            if (customerTaskFlow == null) {
+                LOG.error("no customer task flow found by id:{}, can't push template msg", dispatchFlagInfo.getCustomerTaskFlowId());
+                return null;
+            }
+
             String titleTip;
             switch (dispatchFlagInfo.getFlag()) {
                 case 1:
@@ -806,7 +817,7 @@ public class DispatchInfoServiceImpl extends BaseCRUDService<DispatchInfoDO, Dis
             LOG.info("push template msg to shipNo:{}, user:{}, thirdName:{}", ship.getShipNo(), userProfileDO.getLoginName(), userThirdParty.getThirdName());
             return ret;
         } catch (Exception e) {
-            LOG.error("push template msg err, shipNo", dispatchFlagInfo.getShipNo(), e);
+            LOG.error("push template msg err, shipNo", dispatchFlagInfo.getShipId(), e);
         }
          return null;
     }
