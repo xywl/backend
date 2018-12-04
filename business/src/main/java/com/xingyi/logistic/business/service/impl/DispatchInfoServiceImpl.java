@@ -809,7 +809,7 @@ public class DispatchInfoServiceImpl extends BaseCRUDService<DispatchInfoDO, Dis
             Map<String, ValueColorPair> dataMap = new HashMap<>();
             dataMap.put("first", new ValueColorPair("「" + ship.getShipNo() + "」" + titleTip, "#120FE9"));
             dataMap.put("keyword1", new ValueColorPair(customerTaskFlow.getGoodsName(), "#120FE9"));
-            dataMap.put("keyword2", new ValueColorPair(String.valueOf(dispatchFlagInfo.getPreLoad()), "#120FE9"));
+            dataMap.put("keyword2", new ValueColorPair(String.valueOf(dispatchFlagInfo.getPreLoad() + "吨"), "#120FE9"));
             dataMap.put("keyword3", new ValueColorPair(startPort.getName(), "#120FE9"));
             dataMap.put("keyword4", new ValueColorPair(endPort.getName(), "#120FE9"));
             dataMap.put("keyword5", new ValueColorPair(DateUtils.getFormatDatetime(customerTaskFlow.getLoadingTime() * 1000, "yyyy年M月d日 H时"), "#120FE9"));
