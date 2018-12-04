@@ -133,6 +133,13 @@
         LIMIT 1
     </select>
 
+    <select id="getShipOwnerByShipId" parameterType="java.lang.Long" resultMap="AllColumnMap">
+        SELECT <include refid="all_column"/>
+        FROM `ShipStaff` a
+        WHERE a.`shipId` = #{shipId} and a.`isDeleted` = 0 and a.`isOwner` = 1
+        LIMIT 1
+    </select>
+
     <select id="getExistCount" resultType="java.lang.Integer" parameterType="Map" >
         SELECT  count(id)
         FROM  `ShipStaff`

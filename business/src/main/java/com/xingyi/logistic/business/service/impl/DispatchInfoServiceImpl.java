@@ -12,6 +12,7 @@ import com.xingyi.logistic.business.bean.wechat.ValueColorPair;
 import com.xingyi.logistic.business.db.dao.DispatchInfoDAO;
 import com.xingyi.logistic.business.db.dao.SailingInfoDAO;
 import com.xingyi.logistic.business.db.dao.ShipDAO;
+import com.xingyi.logistic.business.db.dao.ShipStaffDAO;
 import com.xingyi.logistic.business.db.dao.base.BaseDAO;
 import com.xingyi.logistic.business.db.entity.CustomerTaskFlow4DispatchDBQuery;
 import com.xingyi.logistic.business.db.entity.CustomerTaskFlow4DispatchDO;
@@ -20,6 +21,7 @@ import com.xingyi.logistic.business.db.entity.DispatchInfoDBQuery;
 import com.xingyi.logistic.business.db.entity.DispatchInfoDO;
 import com.xingyi.logistic.business.db.entity.SailingInfoDBQuery;
 import com.xingyi.logistic.business.db.entity.ShipDBQuery;
+import com.xingyi.logistic.business.db.entity.ShipStaffDO;
 import com.xingyi.logistic.business.db.entity.ShipWithStaffDO;
 import com.xingyi.logistic.business.model.AvailableDispatchShip;
 import com.xingyi.logistic.business.model.CustomerTaskFlow;
@@ -104,6 +106,9 @@ public class DispatchInfoServiceImpl extends BaseCRUDService<DispatchInfoDO, Dis
 
     @Autowired
     private UserProfileDAO userProfileDAO;
+
+    @Autowired
+    private ShipStaffDAO shipStaffDAO;
 
     @Autowired
     private DispatchInfoConverter dispatchInfoConverter;
@@ -719,8 +724,12 @@ public class DispatchInfoServiceImpl extends BaseCRUDService<DispatchInfoDO, Dis
         }
 
         try {
+            ShipStaffDO shipOwner = shipStaffDAO.getShipOwnerByShipId(ship.getId());
+            if (shipOwner == null) {
+                LOG.warn("no ship owner found, shipNo:{}", ship.getShipNo());
+            }
             // 根据船舶去寻找关联用户 根据船关联的手机号去用户表中的手机号进而获取到用户
-            UserProfileDO userProfileDO = userProfileDAO.getByMobile(ship.getMobile());
+            UserProfileDO userProfileDO = userProfileDAO.getByMobile(shipOwner.getMobile());
             if (userProfileDO == null) {
                 LOG.warn("no user found by mobile:{}", ship.getMobile());
                 return null;
