@@ -128,7 +128,7 @@ public class WeChatService {
         }
         TemplateMsgData templateMsgData = new TemplateMsgData();
         templateMsgData.setToUser(toUser);
-        templateMsgData.setTemplateId("rxjqJPbwa-pWUfE3sr4ppKpN7MBsTn1PWvjHFrxB_OE");
+        templateMsgData.setTemplateId("HKm-PmOlvNt_OPzG4dJrKe8EHl6ScPUuotu5jGJdHEs");
         Map<String, ValueColorPair> dataMap = new HashMap<>();
         dataMap.put("first", new ValueColorPair(testFirst, "#120FE9"));
         dataMap.put("keyword1", new ValueColorPair("1a2399ad", "#120FE9"));
