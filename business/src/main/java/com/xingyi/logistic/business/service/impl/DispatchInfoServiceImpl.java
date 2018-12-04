@@ -762,6 +762,17 @@ public class DispatchInfoServiceImpl extends BaseCRUDService<DispatchInfoDO, Dis
                 return null;
             }
 
+
+            // 确认customerTaskFlow
+            if (customerTaskFlow == null) {
+                JsonRet<CustomerTaskFlow> customerTaskFlowRet = customerTaskFlowService.getById(dispatchFlagInfo.getCustomerTaskFlowId());
+                customerTaskFlow = customerTaskFlowRet.getData();
+            }
+            if (customerTaskFlow == null) {
+                LOG.error("no customer task flow found by id:{}, can't push template msg", dispatchFlagInfo.getCustomerTaskFlowId());
+                return null;
+            }
+
             //获取港口信息
             JsonRet<Port> startPortRet = portService.getById(customerTaskFlow.getStartPortId());
             Port startPort = startPortRet.getData();
@@ -774,16 +785,6 @@ public class DispatchInfoServiceImpl extends BaseCRUDService<DispatchInfoDO, Dis
             Port endPort = endPortRet.getData();
             if (endPort == null) {
                 LOG.warn("no end port found, portId:{}", customerTaskFlow.getEndPortId());
-                return null;
-            }
-
-            //
-            if (customerTaskFlow == null) {
-                JsonRet<CustomerTaskFlow> customerTaskFlowRet = customerTaskFlowService.getById(dispatchFlagInfo.getCustomerTaskFlowId());
-                customerTaskFlow = customerTaskFlowRet.getData();
-            }
-            if (customerTaskFlow == null) {
-                LOG.error("no customer task flow found by id:{}, can't push template msg", dispatchFlagInfo.getCustomerTaskFlowId());
                 return null;
             }
 
@@ -813,6 +814,7 @@ public class DispatchInfoServiceImpl extends BaseCRUDService<DispatchInfoDO, Dis
             dataMap.put("keyword4", new ValueColorPair(endPort.getName(), "#120FE9"));
             dataMap.put("keyword5", new ValueColorPair(DateUtils.getFormatDatetime(customerTaskFlow.getLoadingTime() * 1000, "yyyy年M月d日 H时"), "#120FE9"));
             dataMap.put("remark", new ValueColorPair("如有问题，请联系调度员。", "#120FE9"));
+            templateMsgData.setData(dataMap);
             String ret = weChatService.sendTemplateMsg(accessToken, templateMsgData);
             LOG.info("push template msg to shipNo:{}, user:{}, thirdName:{}", ship.getShipNo(), userProfileDO.getLoginName(), userThirdParty.getThirdName());
             return ret;
