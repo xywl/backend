@@ -142,6 +142,20 @@ public class WeChatService {
         return HttpClientUtil.post(baseUrl, JsonUtil.toJson(templateMsgData));
     }
 
+    /**
+     * 发送模板消息
+     * @param accessToken
+     * @param templateMsgData
+     * @return
+     */
+    public String sendTemplateMsg(String accessToken, TemplateMsgData templateMsgData) {
+        if (StringUtils.isEmpty(accessToken) || templateMsgData == null) {
+            return null;
+        }
+        String baseUrl = "https://api.weixin.qq.com/cgi-bin/message/template/send?access_token=" + accessToken;
+        return HttpClientUtil.post(baseUrl, JsonUtil.toJson(templateMsgData));
+    }
+
     private <T> T getWeChatResponse(String response, Class<T> clazz) {
         if (!StringUtils.isEmpty(response)) {
             try {

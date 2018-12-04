@@ -5,7 +5,7 @@ package com.xingyi.logistic.business.model;
  */
 public class DispatchFlagInfo extends DispatchInfo {
 
-    private Integer flag;
+    private Integer flag;// 1：修改   2：删除   3：新增
     private Integer stashStatus;
 
     public Integer getFlag() {

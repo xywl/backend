@@ -108,6 +108,13 @@
         WHERE `id` = #{id}
     </select>
 
+    <select id="getByMobile" parameterType="java.lang.String" resultMap="AllColumnMap">
+        SELECT <include refid="all_column"/>
+        FROM `UserProfile`
+        WHERE `isDeleted` = 0 and `mobile` = #{mobile}
+        limit 1;
+    </select>
+
     <select id="getExistCount" resultType="java.lang.Integer" parameterType="Map" >
         SELECT  count(id)
         FROM  `UserProfile`

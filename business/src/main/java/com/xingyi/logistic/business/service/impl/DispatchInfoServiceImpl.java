@@ -1,21 +1,63 @@
 package com.xingyi.logistic.business.service.impl;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
+import com.xingyi.logistic.authentication.db.dao.UserProfileDAO;
+import com.xingyi.logistic.authentication.db.entity.UserProfileDO;
+import com.xingyi.logistic.authentication.service.wechat.WeChatService;
+import com.xingyi.logistic.business.bean.wechat.AppSecretConfig;
+import com.xingyi.logistic.business.bean.wechat.AppType;
+import com.xingyi.logistic.business.bean.wechat.TemplateMsgData;
+import com.xingyi.logistic.business.bean.wechat.ThirdType;
+import com.xingyi.logistic.business.bean.wechat.ValueColorPair;
 import com.xingyi.logistic.business.db.dao.DispatchInfoDAO;
 import com.xingyi.logistic.business.db.dao.SailingInfoDAO;
 import com.xingyi.logistic.business.db.dao.ShipDAO;
 import com.xingyi.logistic.business.db.dao.base.BaseDAO;
-import com.xingyi.logistic.business.db.entity.*;
-import com.xingyi.logistic.business.model.*;
+import com.xingyi.logistic.business.db.entity.CustomerTaskFlow4DispatchDBQuery;
+import com.xingyi.logistic.business.db.entity.CustomerTaskFlow4DispatchDO;
+import com.xingyi.logistic.business.db.entity.CustomerTaskShipDO;
+import com.xingyi.logistic.business.db.entity.DispatchInfoDBQuery;
+import com.xingyi.logistic.business.db.entity.DispatchInfoDO;
+import com.xingyi.logistic.business.db.entity.SailingInfoDBQuery;
+import com.xingyi.logistic.business.db.entity.ShipDBQuery;
+import com.xingyi.logistic.business.db.entity.ShipWithStaffDO;
+import com.xingyi.logistic.business.model.AvailableDispatchShip;
+import com.xingyi.logistic.business.model.CustomerTaskFlow;
+import com.xingyi.logistic.business.model.CustomerTaskFlow4Dispatch;
+import com.xingyi.logistic.business.model.CustomerTaskFlow4DispatchQuery;
+import com.xingyi.logistic.business.model.CustomerTaskParam;
+import com.xingyi.logistic.business.model.DispatchFlagInfo;
+import com.xingyi.logistic.business.model.DispatchInfo;
+import com.xingyi.logistic.business.model.DispatchInfoParam;
+import com.xingyi.logistic.business.model.DispatchInfoQuery;
+import com.xingyi.logistic.business.model.DispatchPlan;
+import com.xingyi.logistic.business.model.GetDispatchShipParam;
+import com.xingyi.logistic.business.model.Port;
+import com.xingyi.logistic.business.model.ReportParam;
+import com.xingyi.logistic.business.model.SailingInfoQuery;
+import com.xingyi.logistic.business.model.Ship;
+import com.xingyi.logistic.business.model.ShipQuery;
+import com.xingyi.logistic.business.model.UserThirdParty;
+import com.xingyi.logistic.business.model.UserThirdPartyDetail;
+import com.xingyi.logistic.business.model.UserThirdPartyDetailQuery;
+import com.xingyi.logistic.business.model.UserThirdPartyQuery;
 import com.xingyi.logistic.business.mq.SendMessageServer;
 import com.xingyi.logistic.business.service.CustomerTaskFlowService;
 import com.xingyi.logistic.business.service.DispatchInfoService;
+import com.xingyi.logistic.business.service.PortService;
 import com.xingyi.logistic.business.service.ShipService;
+import com.xingyi.logistic.business.service.UserThirdPartyDetailService;
+import com.xingyi.logistic.business.service.UserThirdPartyService;
 import com.xingyi.logistic.business.service.base.BaseCRUDService;
 import com.xingyi.logistic.business.service.base.ModelConverter;
 import com.xingyi.logistic.business.service.base.QueryConditionConverter;
-import com.xingyi.logistic.business.service.converter.*;
+import com.xingyi.logistic.business.service.converter.CustomerTaskFlow4DispatchConverter;
+import com.xingyi.logistic.business.service.converter.CustomerTaskFlow4DispatchQueryConverter;
+import com.xingyi.logistic.business.service.converter.DispatchInfoConverter;
+import com.xingyi.logistic.business.service.converter.DispatchInfoQueryConverter;
+import com.xingyi.logistic.business.service.converter.SailingInfoQueryConverter;
+import com.xingyi.logistic.business.service.converter.ShipConverter;
+import com.xingyi.logistic.business.service.converter.ShipQueryConverter;
 import com.xingyi.logistic.business.util.DateUtils;
 import com.xingyi.logistic.business.util.JsonUtil;
 import com.xingyi.logistic.business.util.ParamValidator;
@@ -24,16 +66,20 @@ import com.xingyi.logistic.common.bean.ErrCode;
 import com.xingyi.logistic.common.bean.JsonRet;
 import com.xingyi.logistic.common.bean.MiniUIJsonRet;
 import com.xingyi.logistic.common.bean.QueryType;
-import okhttp3.internal.framed.ErrorCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -55,6 +101,9 @@ public class DispatchInfoServiceImpl extends BaseCRUDService<DispatchInfoDO, Dis
 
     @Autowired
     private SailingInfoDAO sailingInfoDAO;
+
+    @Autowired
+    private UserProfileDAO userProfileDAO;
 
     @Autowired
     private DispatchInfoConverter dispatchInfoConverter;
@@ -85,6 +134,18 @@ public class DispatchInfoServiceImpl extends BaseCRUDService<DispatchInfoDO, Dis
 
     @Autowired
     private SendMessageServer sendMessageServer;
+
+    @Autowired
+    private UserThirdPartyService userThirdPartyService;
+
+    @Autowired
+    private UserThirdPartyDetailService userThirdPartyDetailService;
+
+    @Autowired
+    private WeChatService weChatService;
+
+    @Autowired
+    private PortService portService;
 
     /**
      * 加载所有设备
@@ -586,6 +647,7 @@ public class DispatchInfoServiceImpl extends BaseCRUDService<DispatchInfoDO, Dis
                 plan.setDispatchplansendid(dispatchFlagInfo.getId());
             }
             if (dispatchFlagInfo.getFlag() == 2) {
+                pushTemplateMsg(dispatchFlagInfo, null, null);
                 sendMessageServer.funSendCancelMsg(plan);
                 LOG.info("send cancel msg to dev, planID:{}", dispatchFlagInfo.getId());
                 return;
@@ -619,11 +681,125 @@ public class DispatchInfoServiceImpl extends BaseCRUDService<DispatchInfoDO, Dis
             plan.setGoodstype(String.valueOf(customerTaskFlow.getGoodsType()));
             plan.setPlanton(String.valueOf(dispatchFlagInfo.getPreLoad()));
             plan.setRealton("");
+            pushTemplateMsg(dispatchFlagInfo, ship, customerTaskFlow);
             sendMessageServer.funSendMsg(plan);
             LOG.info("send msg to dev, content:{}", JsonUtil.toJson(plan));
         } catch (Exception e) {
             LOG.error("send msg to dev err, dispatchInfo:{}", JsonUtil.toJson(dispatchFlagInfo), e);
         }
+    }
+
+    /**
+     * 推送模板消息
+     *
+     * 浙江兴能001船舶有新的货物调度成功！
+     * 货名：煤炭
+     * 吨位：5000吨
+     * 装货港：天津
+     * 卸货港：上海
+     * 装载日期：2015年9月25日 上午9点
+     * 如有问题，请联系调度员。
+     * @param dispatchFlagInfo
+     * @return
+     */
+    private String pushTemplateMsg(DispatchFlagInfo dispatchFlagInfo, Ship ship, CustomerTaskFlow customerTaskFlow) {
+        if (ship == null) {
+            JsonRet<Ship> shipRet = shipService.getById(dispatchFlagInfo.getShipId());
+            ship = shipRet.getData();
+        }
+
+        if (ship == null) {
+            LOG.warn("no ship found by id:{}, can't push template msg", dispatchFlagInfo.getShipId());
+            return null;
+        }
+
+        if (ship.getShipFlag() != 1) {
+            LOG.info("not self-owned ship, not push template msg, shipNo:{}, shipFlag:{}", ship.getShipNo(), ship.getShipFlag());
+            return null;
+        }
+
+        try {
+            // 根据船舶去寻找关联用户 根据船关联的手机号去用户表中的手机号进而获取到用户
+            UserProfileDO userProfileDO = userProfileDAO.getByMobile(ship.getMobile());
+            if (userProfileDO == null) {
+                LOG.warn("no user found by mobile:{}", ship.getMobile());
+                return null;
+            }
+
+            UserThirdPartyQuery queryParam = new UserThirdPartyQuery();
+            queryParam.setUserId(userProfileDO.getId());
+            queryParam.setThirdType(ThirdType.WECHAT);
+            JsonRet<List<UserThirdParty>> userThirdPartyRet = userThirdPartyService.getList(queryParam);
+            if (!userThirdPartyRet.isSuccess() || CollectionUtils.isEmpty(userThirdPartyRet.getData())) {
+                LOG.warn("no user third party found");
+                return null;
+            }
+            UserThirdParty userThirdParty = userThirdPartyRet.getData().get(0);
+            UserThirdPartyDetailQuery detailQuery = new UserThirdPartyDetailQuery();
+            detailQuery.setThirdId(userThirdParty.getThirdId());
+            detailQuery.setThirdType(ThirdType.WECHAT);
+            detailQuery.setAppType(AppType.MP);
+            JsonRet<List<UserThirdPartyDetail>> detailListRet = userThirdPartyDetailService.getList(detailQuery);
+            if (!detailListRet.isSuccess() || CollectionUtils.isEmpty(detailListRet.getData())) {
+                LOG.warn("no user third party detail found");
+                return null;
+            }
+            UserThirdPartyDetail userThirdPartyDetail = detailListRet.getData().get(0);
+            AppSecretConfig appSecretConfig = weChatService.getAppSecretConfig(AppType.MP);
+            String accessToken = weChatService.getAccessToken(appSecretConfig.getAppId(), appSecretConfig.getAppSecret());
+            if (accessToken == null) {
+                LOG.warn("can't get access token");
+                return null;
+            }
+
+            //获取港口信息
+            JsonRet<Port> startPortRet = portService.getById(customerTaskFlow.getStartPortId());
+            Port startPort = startPortRet.getData();
+            if (startPort == null) {
+                LOG.warn("no start port found, portId:{}", customerTaskFlow.getStartPortId());
+                return null;
+            }
+
+            JsonRet<Port> endPortRet = portService.getById(customerTaskFlow.getEndPortId());
+            Port endPort = endPortRet.getData();
+            if (endPort == null) {
+                LOG.warn("no end port found, portId:{}", customerTaskFlow.getEndPortId());
+                return null;
+            }
+
+            String titleTip;
+            switch (dispatchFlagInfo.getFlag()) {
+                case 1:
+                    titleTip = "船舶有新的货物调度成功！";
+                    break;
+                case 2:
+                    titleTip = "船舶有货物调度调整成功！";
+                    break;
+                case 3:
+                    titleTip = "船舶有货物调度取消成功！";
+                    break;
+                default:
+                    titleTip = "";
+                    break;
+            }
+            TemplateMsgData templateMsgData = new TemplateMsgData();
+            templateMsgData.setToUser(userThirdPartyDetail.getThirdId2());
+            templateMsgData.setTemplateId("HKm-PmOlvNt_OPzG4dJrKe8EHl6ScPUuotu5jGJdHEs");
+            Map<String, ValueColorPair> dataMap = new HashMap<>();
+            dataMap.put("first", new ValueColorPair("「" + ship.getShipNo() + "」" + titleTip, "#120FE9"));
+            dataMap.put("keyword1", new ValueColorPair(customerTaskFlow.getGoodsName(), "#120FE9"));
+            dataMap.put("keyword2", new ValueColorPair(String.valueOf(dispatchFlagInfo.getPreLoad()), "#120FE9"));
+            dataMap.put("keyword3", new ValueColorPair(startPort.getName(), "#120FE9"));
+            dataMap.put("keyword4", new ValueColorPair(endPort.getName(), "#120FE9"));
+            dataMap.put("keyword5", new ValueColorPair(DateUtils.getFormatDatetime(customerTaskFlow.getLoadingTime() * 1000, "yyyy年M月d日 H时"), "#120FE9"));
+            dataMap.put("remark", new ValueColorPair("如有问题，请联系调度员。", "#120FE9"));
+            String ret = weChatService.sendTemplateMsg(accessToken, templateMsgData);
+            LOG.info("push template msg to shipNo:{}, user:{}, thirdName:{}", ship.getShipNo(), userProfileDO.getLoginName(), userThirdParty.getThirdName());
+            return ret;
+        } catch (Exception e) {
+            LOG.error("push template msg err, shipNo", dispatchFlagInfo.getShipNo(), e);
+        }
+         return null;
     }
 
     @Override

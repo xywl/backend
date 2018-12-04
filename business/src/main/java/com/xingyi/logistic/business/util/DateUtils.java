@@ -41,4 +41,20 @@ public class DateUtils
         return dateFormatter.format(c.getTime());
     }
 
+    /**
+     * 获取格式化日期
+     * @param time 毫秒
+     * @param dateFormat 日期格式
+     * @return
+     */
+    public static String getFormatDatetime(long time, String dateFormat) {
+        SimpleDateFormat dateFormatter =new SimpleDateFormat(dateFormat);
+        Calendar c = Calendar.getInstance();
+        c.setTimeInMillis(time);
+        return dateFormatter.format(c.getTime());
+    }
+
+    public static void main(String[] args) {
+        System.out.println(getFormatDatetime(1519297200 * 1000L, "yyyy年M月d日 H时"));
+    }
 }
