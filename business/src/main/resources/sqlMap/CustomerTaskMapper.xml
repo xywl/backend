@@ -268,8 +268,8 @@
         group by taskId
         ) bb on bb.taskId=aa.id
         set taskStatus=(case
-        when maxStatus == 0 then 0
-        when maxStatus == 5 and minStatus == 5 then 2
+        when maxStatus = 0 then 0
+        when maxStatus = 5 and minStatus = 5 then 2
         else 1
         end)
         where aa.id = #{taskId}
