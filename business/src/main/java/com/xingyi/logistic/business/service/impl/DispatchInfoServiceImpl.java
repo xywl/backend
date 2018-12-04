@@ -791,13 +791,13 @@ public class DispatchInfoServiceImpl extends BaseCRUDService<DispatchInfoDO, Dis
             String titleTip;
             switch (dispatchFlagInfo.getFlag()) {
                 case 1:
-                    titleTip = "船舶有新的货物调度成功！";
-                    break;
-                case 2:
                     titleTip = "船舶有货物调度调整成功！";
                     break;
-                case 3:
+                case 2:
                     titleTip = "船舶有货物调度取消成功！";
+                    break;
+                case 3:
+                    titleTip = "船舶有新的货物调度成功！";
                     break;
                 default:
                     titleTip = "";
