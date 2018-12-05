@@ -570,9 +570,8 @@ public class DispatchInfoServiceImpl extends BaseCRUDService<DispatchInfoDO, Dis
                     DispatchInfoDO dispatchInfoDO = dispatchInfoDAO.getById(o.getId());
                     if (dispatchInfoDO != null && dispatchInfoDO.getStatus() == -1) {//对于原来是未调度的，修改后将其变成已调度
                         o.setStatus(0);
-                        isNeedSendMsgToDev = true;
-
                     }
+                    isNeedSendMsgToDev = true;
                 }
                 o.setCustomerTaskFlowId(dispatchInfoParam.getCustomerTaskFlowId());
                 dispatchInfoDAO.update(dispatchInfoConverter.toDataObject(o));
