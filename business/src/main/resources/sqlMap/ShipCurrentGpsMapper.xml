@@ -25,6 +25,8 @@
         <result property="entertime" column="entertime"/>
         <result property="leavetime" column="leavetime"/>
         <result property="online" column="online"/>
+        <result property="name" column="name"/>
+        <result property="mobile" column="mobile"/>
     </resultMap>
 
     <resultMap id="mShipDevMap" type="com.xingyi.logistic.business.model.ShipDev">
@@ -83,6 +85,10 @@
         <result property="goodsName" column="goodsName"/>
         <result property="startPortId" column="startPortId"/>
         <result property="endPortId" column="endPortId"/>
+        <result property="sender" column="sender"/>
+        <result property="receiver" column="receiver"/>
+        <result property="name" column="name"/>
+        <result property="mobile" column="mobile"/>
     </resultMap>
 
     <resultMap id="mRetDispatchMap" type="com.xingyi.logistic.business.model.DispatchData">
@@ -100,6 +106,10 @@
         <result property="goodsName" column="goodsName"/>
         <result property="startPortId" column="startPortId"/>
         <result property="endPortId" column="endPortId"/>
+        <result property="sender" column="sender"/>
+        <result property="receiver" column="receiver"/>
+        <result property="name" column="name"/>
+        <result property="mobile" column="mobile"/>
     </resultMap>
 
     <sql id="all_column">
@@ -247,9 +257,10 @@
     </select>
 
     <select id="queryShipCurrentGpsInfo" resultMap="AllColumnMap" parameterType="Map">
-        select A2.shipNo, A1.*, A2.id as shipId,CASE WHEN (UNIX_TIMESTAMP(now())-UNIX_TIMESTAMP(STR_TO_DATE(A1.gpsTime,"%Y-%m-%d %H:%i:%s ")))/60 > 10 THEN 0 ELSE 1 END AS online
+        select A2.shipNo,SS1.name,SS1.mobile, A1.*, A2.id as shipId,CASE WHEN (UNIX_TIMESTAMP(now())-UNIX_TIMESTAMP(STR_TO_DATE(A1.gpsTime,"%Y-%m-%d %H:%i:%s ")))/60 > 10 THEN 0 ELSE 1 END AS online
         FROM `ShipCurrentGps` A1
         INNER JOIN Ship  A2 ON A1.devId = A2.gpsDeviceId
+        LEFT JOIN ShipStaff SS1 ON SS1.shipId = A2.id AND SS1.title = 1
         <if test="pojo.taskNo != null and pojo.taskNo != ''">
             INNER JOIN (
             select a.id as taskId, a.taskNo as customerTaskNo, b.id as customerTaskFlowId,
@@ -302,12 +313,15 @@
         <![CDATA[
         SELECT A1.ID, A1.shipId, A1.`status`, A1.actualArriveEPortTime, A1.loadTime, A1.loadWeight,
         A1.preArriveEPortTime, A1.departPortTime, A1.actualArriveEPortTime, A1.dischargeTime,
-        A1.dischargeWeight, A1.dischargeDelayFee, A3.goodsName, A4.startPortId, A4.endPortId
+        A1.dischargeWeight, A1.dischargeDelayFee, A3.goodsName, A4.startPortId, A4.endPortId,
+        A3.sender,A3.receiver,A5.name,A5.mobile
         FROM SailingInfo A1
         LEFT  JOIN DispatchInfo A2 ON A1.orderId=A2.id
         LEFT JOIN CustomerTaskFlow A3 ON A2.customerTaskFlowId=A3.id
         LEFT JOIN Flow A4 ON A4.ID=A3.flowId
-        WHERE A1.status <5
+        LEFT JOIN ShipStaff A5 ON A5.shipId = A1.shipId AND A5.title = 1
+        LEFT JOIN Ship A6 ON A6.id =A1.shipId
+        WHERE A1.status <5  AND (A6.gpsDeviceId is not null AND A6.gpsDeviceId !='')
         AND A1.isDeleted = 0
         ]]>
     </select>
@@ -315,11 +329,15 @@
     <!-- 加载航次信息表-->
     <select id="queryDispatchInfo" resultMap="mRetDispatchMap" parameterType="Map">
         <![CDATA[
-        SELECT A1.id, A1.orderNo, A1.dispatchType, A1.shipId, A1.shipFlag as shipType, A1.preWeight, A1.preLoad, A1.preArriveTime, A1.preSettleAmount, A1.settleType, A3.goodsName, A4.startPortId, A4.endPortId
+        SELECT A1.id, A1.orderNo, A1.dispatchType, A1.shipId, A1.shipFlag as shipType, A1.preWeight, A1.preLoad,
+        A1.preArriveTime, A1.preSettleAmount, A1.settleType, A3.goodsName, A4.startPortId, A4.endPortId,
+        A3.sender,A3.receiver,A5.name,A5.mobile
         FROM DispatchInfo A1
         LEFT JOIN CustomerTaskFlow A3 ON A1.customerTaskFlowId=A3.id
         LEFT JOIN Flow A4 ON A4.ID=A3.flowId
-        WHERE A1.status <5
+        LEFT JOIN ShipStaff A5 ON A5.shipId = A1.shipId AND A5.title = 1
+        LEFT JOIN Ship A6 ON A6.id =A1.shipId
+        WHERE A1.status <5  AND (A6.gpsDeviceId is not null AND A6.gpsDeviceId !='')
         AND A1.isDeleted = 0
         ]]>
     </select>
