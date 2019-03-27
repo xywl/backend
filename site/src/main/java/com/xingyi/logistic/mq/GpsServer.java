@@ -13,6 +13,8 @@ import org.apache.commons.collections.map.HashedMap;
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -34,6 +36,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Component
 public class GpsServer extends BaseCRUDController<ShipCurrentGps, ShipCurrentGpsQuery>
 {
+    private static final Logger LOG = LoggerFactory.getLogger(GpsServer.class);
+
     private static ManageShipCurrentGps manageShipCurrentGps = new ManageShipCurrentGps();
 
     private static LinkedBlockingQueue<Map<String, String>> rec_queue = new LinkedBlockingQueue<>();
@@ -72,7 +76,7 @@ public class GpsServer extends BaseCRUDController<ShipCurrentGps, ShipCurrentGps
     @Async
     public void executeLocationTask(String xml)
     {
-        //System.out.println(xml);
+        LOG.info("Location:{}", xml);
         manageShipCurrentGps.add(dealXml(xml));
     }
 
@@ -85,6 +89,7 @@ public class GpsServer extends BaseCRUDController<ShipCurrentGps, ShipCurrentGps
     {
         //System.out.println("--------------进");
         //System.out.println(xml);
+        LOG.info("EnterStation:{}", xml);
         manageShipCurrentGps.addEnterStation(dealXml(xml));
     }
 
@@ -99,6 +104,7 @@ public class GpsServer extends BaseCRUDController<ShipCurrentGps, ShipCurrentGps
     {
         //System.out.println("--------------出");
         //System.out.println(xml);
+        LOG.info("LeaveStation:{}", xml);
         manageShipCurrentGps.addLeaveStation(dealXml(xml));
     }
 
@@ -200,6 +206,7 @@ public class GpsServer extends BaseCRUDController<ShipCurrentGps, ShipCurrentGps
                             shipCurrentGpsService.add(mShipCurrentGps);
 
                         }
+                        LOG.info("add or update gpsData, devId:{}, gpsTime:{}", mShipCurrentGps.getDevId(), mShipCurrentGps.getGpsTime());
                        // System.out.println(mShipCurrentGps.toString());
                     }
                 }
