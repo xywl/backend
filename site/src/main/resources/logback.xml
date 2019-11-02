@@ -8,7 +8,7 @@
         </encoder>
     </appender>
 
-    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <File>${PATH_LOG}/xyl.log</File>
         <encoder>
             <charset>UTF-8</charset>
