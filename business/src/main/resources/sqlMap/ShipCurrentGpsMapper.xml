@@ -276,8 +276,8 @@
         WHERE A1.longitude != 0 AND A1.longitude is not NULL
         <if test="pojo.shipNo != null"> AND A2.shipNo like concat('%', #{pojo.shipNo}, '%') </if>
         <if test="pojo.devId != null"> AND A1.devId like concat('%', #{pojo.devId}, '%') </if>
-        <if test="pojo.online == 2 "> AND (UNIX_TIMESTAMP(now())-UNIX_TIMESTAMP(STR_TO_DATE(A1.gpsTime,"%Y-%m-%d %H:%i:%s ")))/60 > 10 </if>
-        <if test="pojo.online == 1 "> AND (UNIX_TIMESTAMP(now())-UNIX_TIMESTAMP(STR_TO_DATE(A1.gpsTime,"%Y-%m-%d %H:%i:%s ")))/60 <![CDATA[<=]]> 10 </if>
+        <if test="pojo.online == 2 "> AND (UNIX_TIMESTAMP(now())-UNIX_TIMESTAMP(STR_TO_DATE(A1.gpsTime,"%Y-%m-%d %H:%i:%s ")))/60 > 1440 </if>
+        <if test="pojo.online == 1 "> AND (UNIX_TIMESTAMP(now())-UNIX_TIMESTAMP(STR_TO_DATE(A1.gpsTime,"%Y-%m-%d %H:%i:%s ")))/60 <![CDATA[<=]]> 1440 </if>
     </select>
 
     <select id="queryComboxShipInfo" resultMap="mRetComboxMap" parameterType="Map">
